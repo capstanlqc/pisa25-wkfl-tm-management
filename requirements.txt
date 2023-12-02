@@ -1,4 +1,2 @@
 beautifulsoup4==4.12.2
-bs4==0.0.1
-lxml==4.9.3
-soupsieve==2.5
+lxml==4.9.2
