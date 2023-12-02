@@ -1,10 +1,11 @@
 import os
-# from pathlib import Path
+from pathlib import Path
 import sys
 import lxml
 from bs4 import BeautifulSoup as bs
 import re
 from glob import glob
+from itertools import chain
 
 # unique argument: path to the repo root folder
 repo = sys.argv[1:][0]
@@ -25,38 +26,76 @@ def get_domain(file):
         # for tmx files
         tentative_domain = file_name.split("_")[2]
         # if tentative_domain.endswith("Q"):
-        if tentative_domain in domains["QQS"] or tentative_domain in domains["QQA"]:
+        if tentative_domain in allowed_domains["QQS"] or tentative_domain in allowed_domains["QQA"]:
             # then it's not the domain, but the actual questionnaire
-            return next((key for key, value in domains.items() if tentative_domain in value), None)
+            return next((key for key, value in allowed_domains.items() if tentative_domain in value), None)
         return tentative_domain
     else:
-        # for batch folders
+        # for batch folders or batch TMs
         if "_QQS_" in file_name or "_QQA_" in file_name:
             return file_name.split("_")[1]
         else:
             return file_name.split("_")[2].split("-")[0]
 
 
-def delete_unwanted_tmx(file, allowed_domains):
+def delete_file(file):
 
-    tmx_domain = get_domain(file)
-    print(f"{tmx_domain=}")
-    print(f"{allowed_domains=}")
-    if tmx_domain not in allowed_domains:
-        print(f">>> Delete {file.replace(repo, '')} !!!")
-        # file = Path(file) if isinstance(file, str) else file # only needed with unlink()
+    print(f">>> Delete {file.replace(repo, '')} !!!")
+    # file = Path(file) if isinstance(file, str) else file # only needed with unlink()
+    try:
+        # file.unlink()
+        os.remove(file)
+        print(f"The file {file} has been successfully deleted.")
+    except FileNotFoundError:
+        print(f"The file {file} does not exist.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def create_dir(dir_path):
+    try:
+        Path(dir_path).mkdir(parents=True, exist_ok=True)
+        print(f"The folder {dir_path} and any necessary ancestors in the path have been created.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def move_file(orig_path, dest_path):
+        print(f">>> Move {orig_path.replace(repo, '')} to {dest_path.replace(repo, '')} !!!")
+        dir_path, file = os.path.split(dest_path)
+        create_dir(dir_path)
         try:
-            # file.unlink()
-            os.remove(file)
-            print(f"The file {file} has been successfully deleted.")
+            os.replace(orig_path, dest_path)
+            print(f"The file {file} has been successfully moved.")
         except FileNotFoundError:
             print(f"The file {file} does not exist.")
         except Exception as e:
             print(f"An error occurred: {e}")
 
 
+def sort_tmx_file(file_path, current_domains, penalty_dir = "penalty-05"):
+
+    tmx_domain = get_domain(file_path)
+    
+    if os.path.exists(file_path):
+        if tmx_domain in current_domains and penalty_dir in file_path:
+            # remove penalty
+            new_file_path = file_path.replace(f"/{penalty_dir}/", "/")
+            move_file(file_path, new_file_path)
+        elif tmx_domain not in current_domains and penalty_dir not in file_path:
+            # add penalty
+            new_file_path = file_path.replace(f"tm/", f"tm/{penalty_dir}/")
+            move_file(file_path, new_file_path)
+        elif tmx_domain in disallowed_domains:
+            # remove file for good
+            delete_file(file_path)
+
+
 def get_tmx_files(tm_dir):
-    return glob(f"{tm_dir}/**/PISA*_MS2022.tmx*", recursive=True)
+
+    origin_dirs = ["trend", "prev", "next"]
+    files = [glob(f"{tm_dir}/**/{origin_dir}/*.tmx*", recursive=True) for origin_dir in origin_dirs]
+    return list(chain.from_iterable(files))
 
 
 def get_mapped_batches(root_dir_path):
@@ -74,11 +113,13 @@ def get_mapped_batches(root_dir_path):
 def prune_tmx_files(tm_dir_path):
 
     batches = get_mapped_batches(root_dir_path)
-    allowed_domains = get_batch_domains(batches)
+    current_domains = get_batch_domains(batches)
 
     tmx_files = get_tmx_files(tm_dir_path)
+    penalty_dir = "penalty-05"
+
     for tmx_file in tmx_files:
-        delete_unwanted_tmx(tmx_file, allowed_domains)
+        sort_tmx_file(tmx_file, current_domains, penalty_dir)
 
 
 if __name__ == "__main__":
@@ -86,14 +127,13 @@ if __name__ == "__main__":
     print()
 
     disallowed_domains = ["CRT", "XYZ", "FLQ", "FNL", "WBQ"]
-    domains = {
+    allowed_domains = {
         "QQS": ("STQ", "STQ-UH", "STQ-UO", "ICQ"),
         "QQA": ("SCQ", "TCQ"),
         "COS": ("MAT", "REA", "SCI")
     }
 
     root_dir_path = repo # path to root level in the repo
-    source_dir_path = os.path.join(root_dir_path, "source")
     tm_dir_path = os.path.join(root_dir_path, "tm")
 
     prune_tmx_files(tm_dir_path)

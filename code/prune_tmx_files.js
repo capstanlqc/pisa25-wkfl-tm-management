@@ -15,8 +15,8 @@ function getDomain(file) {
 
     if (fileName.startsWith('PISA_') && (fileName.endsWith('tmx') || fileName.endsWith('tmx.zip'))) {
         const tentativeDomain = fileName.split('_')[2];
-        if (domains['QQS'].includes(tentativeDomain) || domains['QQA'].includes(tentativeDomain)) {
-            return Object.keys(domains).find(key => domains[key].includes(tentativeDomain)) || null;
+        if (allowedDomains['QQS'].includes(tentativeDomain) || allowedDomains['QQA'].includes(tentativeDomain)) {
+            return Object.keys(allowedDomains).find(key => allowedDomains[key].includes(tentativeDomain));
         }
         return tentativeDomain;
     } else {
@@ -28,28 +28,63 @@ function getDomain(file) {
     }
 }
 
-function deleteUnwantedTmx(file, allowedDomains) {
-    const tmxDomain = getDomain(file);
-    console.log(`tmx_domain=${tmxDomain}`);
-    console.log(`allowed_domains=${allowedDomains}`);
-    
-    if (!allowedDomains.includes(tmxDomain)) {
-        console.log(`>>> Delete ${file.replace(repo, '')} !!!`);
-        try {
-            fs.unlinkSync(file);
-            console.log(`The file ${file} has been successfully deleted.`);
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                console.log(`The file ${file} does not exist.`);
-            } else {
-                console.error(`An error occurred: ${err}`);
-            }
+function deleteFile(file) {
+    console.log(`>>> Delete ${file.replace(repo, '')} !!!`);
+    try {
+        fs.unlinkSync(file);
+        console.log(`The file ${file} has been successfully deleted.`);
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log(`The file ${file} does not exist.`);
+        } else {
+            console.error(`An error occurred: ${err}`);
+        }
+    }
+}
+
+function createDir(dirPath) {
+    try {
+        fs.mkdirSync(dirPath, { recursive: true });
+        console.log(`The folder ${dirPath} and any necessary ancestors in the path have been created.`);
+    } catch (err) {
+        console.log(`An error occurred: ${err}`);
+    }
+}
+
+function moveFile(origPath, destPath) {
+    console.log(`>>> Move ${origPath.replace(repo, '')} to ${destPath.replace(repo, '')} !!!`);
+    const dirPath = path.dirname(destPath);
+    createDir(dirPath);
+    try {
+        fs.renameSync(origPath, destPath);
+        console.log(`The file ${path.basename(destPath)} has been successfully moved.`);
+    } catch (err) {
+        console.log(`An error occurred: ${err}`);
+    }
+}
+
+function sortTmxFile(filePath, currentDomains, penaltyDir = 'penalty-05') {
+    const tmxDomain = getDomain(filePath);
+
+    if (fs.existsSync(filePath)) {
+        if (currentDomains.includes(tmxDomain) && filePath.includes(penaltyDir)) {
+            const newFilePath = filePath.replace(`/${penaltyDir}/`, '/');
+            moveFile(filePath, newFilePath);
+        } else if (!currentDomains.includes(tmxDomain) && !filePath.includes(penaltyDir)) {
+            const newFilePath = filePath.replace('tm/', `tm/${penaltyDir}/`);
+            moveFile(filePath, newFilePath);
+        } else if (disallowedDomains.includes(tmxDomain)) {
+            deleteFile(filePath);
         }
     }
 }
 
 function getTmxFiles(tmDir) {
-    return glob.sync(`${tmDir}/**/PISA*_MS2022.tmx*`, { nodir: true, dot: true, absolute: true });
+    const originDirs = ['trend', 'prev', 'next'];
+    const files = originDirs.map(originDir =>
+        glob.sync(`${tmDir}/**/${originDir}/*.tmx*`, { recursive: true })
+    );
+    return [].concat(...files);
 }
 
 function getMappedBatches(rootDirPath) {
@@ -62,24 +97,27 @@ function getMappedBatches(rootDirPath) {
 }
 
 function pruneTmxFiles(tmDirPath) {
-    const batches = getMappedBatches(rootDirPath);
-    const allowedDomains = getBatchDomains(batches);
+    const batches = getMappedBatches(repo);
+    const currentDomains = getBatchDomains(batches);
+    const penaltyDir = 'penalty-05';
 
     const tmxFiles = getTmxFiles(tmDirPath);
-    tmxFiles.forEach(tmxFile => deleteUnwantedTmx(tmxFile, allowedDomains));
+
+    tmxFiles.forEach(tmxFile => {
+        sortTmxFile(tmxFile, currentDomains, penaltyDir);
+    });
 }
 
-// main logic
+// action 
 
 const disallowedDomains = ['CRT', 'XYZ', 'FLQ', 'FNL', 'WBQ'];
-const domains = {
+const allowedDomains = {
     'QQS': ['STQ', 'STQ-UH', 'STQ-UO', 'ICQ'],
     'QQA': ['SCQ', 'TCQ'],
-    'COS': ['MAT', 'REA', 'SCI'],
+    'COS': ['MAT', 'REA', 'SCI']
 };
 
 const rootDirPath = repo;
-const sourceDirPath = path.join(rootDirPath, 'source');
 const tmDirPath = path.join(rootDirPath, 'tm');
 
 pruneTmxFiles(tmDirPath);
