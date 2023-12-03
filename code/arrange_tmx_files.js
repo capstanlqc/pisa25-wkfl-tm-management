@@ -7,12 +7,15 @@ const cheerio = require('cheerio');
 const repo = process.argv.slice(2)[0];
 
 function getBatchDomains(batches) {
+    // get domain of the batch
     return batches.map(getDomain);
 }
 
 function getDomain(file) {
+    // get the name of this file or folder
     const fileName = file.includes('/') ? file.split('/').pop() : file;
 
+    // find the domain depending on whether it is a batch TM or batch folder or a trend TM
     if (fileName.startsWith('PISA_') && (fileName.endsWith('tmx') || fileName.endsWith('tmx.zip'))) {
         const tentativeDomain = fileName.split('_')[2];
         if (allowedDomains['QQS'].includes(tentativeDomain) || allowedDomains['QQA'].includes(tentativeDomain)) {
@@ -65,15 +68,19 @@ function moveFile(origPath, destPath) {
 }
 
 function sortTmxFile(filePath, currentDomains, penaltyDir = 'penalty-05') {
+    // get domain of the TMX file
     const tmxDomain = getDomain(filePath);
 
     if (fs.existsSync(filePath)) {
+        // lift if the TM must be activated
         if (currentDomains.includes(tmxDomain) && filePath.includes(penaltyDir)) {
             const newFilePath = filePath.replace(`/${penaltyDir}/`, '/');
             moveFile(filePath, newFilePath);
+        // drop if the TM must be deactivated
         } else if (!currentDomains.includes(tmxDomain) && !filePath.includes(penaltyDir)) {
             const newFilePath = filePath.replace('tm/', `tm/${penaltyDir}/`);
             moveFile(filePath, newFilePath);
+        // delete if the TM should not be used at all in any case
         } else if (disallowedDomains.includes(tmxDomain)) {
             deleteFile(filePath);
         }
@@ -81,7 +88,9 @@ function sortTmxFile(filePath, currentDomains, penaltyDir = 'penalty-05') {
 }
 
 function getTmxFiles(tmDir) {
+    // these are the parent origin folders we care about
     const originDirs = ['trend', 'prev', 'next'];
+    // get all TMX files for those origins
     const files = originDirs.map(originDir =>
         glob.sync(`${tmDir}/**/${originDir}/*.tmx*`, { recursive: true })
     );
@@ -93,18 +102,24 @@ function getMappedBatches(rootDirPath) {
     const content = fs.readFileSync(settingsFile, 'utf8');
     const $ = cheerio.load(content);
 
+    // get the mappings from batch folders in the common repo > source folder
     const mappings = $('mapping[local^="source"]');
+    // get the child folder under source
     return mappings.map((_, repo) => repo.attribs.local.split('/')[1]).get();
 }
 
 function arrangeTmxFiles(tmDirPath) {
+    // get the list of batches in mapped folders
     const batches = getMappedBatches(repo);
+    // get the domains in the batches currently mapped
     const currentDomains = getBatchDomains(batches);
+    // set the penalty
     const penaltyDir = 'penalty-05';
 
     const tmxFiles = getTmxFiles(tmDirPath);
 
     tmxFiles.forEach(tmxFile => {
+        // move the TMX file to the expected location depending on current batch(es)
         sortTmxFile(tmxFile, currentDomains, penaltyDir);
     });
 }
