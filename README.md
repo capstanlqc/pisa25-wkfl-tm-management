@@ -4,6 +4,8 @@ A few scripts for different tasks... For now, just TM management.
 
 ## TM management
 
+### Arrange TMX files
+
 The script `arrange_tmx_files` is meant to lift/activate or drop/deactivate TMs depending on whether they apply for the batch(es) being currently translated. It checks the domains associated to the batch folders currently mapped in the team project, assess whether TMX files in the project are associated with those domains and lifts them or drops them accordingly.
 
 This applies only to TMX files under parent folders `prev`, `next` or `trend`.
@@ -38,3 +40,7 @@ The script (either in Python or Node.js versions) is meant to run in the reposit
 - the Node.js version is meant to be integrated in ACER's workflow manager application.
 
 The original Groovy version would run in the background when the OmegaT project loads and has a different logic (it deletes disallowed files rather than dropping them) but fails to fulfil the need because the TMX files have already been read when they get deleted.
+
+### Prune TMX content 
+
+WIP
