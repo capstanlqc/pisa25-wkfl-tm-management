@@ -106,11 +106,11 @@ def get_mapped_batches(root_dir_path):
         content = f.read()
     bs_content = bs(content, "xml")
 
-    repositories = bs_content.find_all("mapping", attrs={'local': re.compile(r"source")})
-    return [repo.attrs['local'].split("/")[1] for repo in repositories]
+    mappings = bs_content.find_all("mapping", attrs={'local': re.compile(r"source")})
+    return [mapping.attrs['local'].split("/")[1] for mapping in mappings]
 
 
-def prune_tmx_files(tm_dir_path):
+def arrange_tmx_files(tm_dir_path):
 
     batches = get_mapped_batches(root_dir_path)
     current_domains = get_batch_domains(batches)
@@ -136,5 +136,5 @@ if __name__ == "__main__":
     root_dir_path = repo # path to root level in the repo
     tm_dir_path = os.path.join(root_dir_path, "tm")
 
-    prune_tmx_files(tm_dir_path)
+    arrange_tmx_files(tm_dir_path)
 

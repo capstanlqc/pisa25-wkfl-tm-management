@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const { parseString } = require('xml2js');
 const glob = require('glob');
-const cheerio = require('cheerio');
 
 // unique argument: path to the repo root folder
 const repo = process.argv.slice(2)[0];
@@ -23,7 +23,8 @@ function getDomain(file) {
         if (fileName.includes('_QQS_') || fileName.includes('_QQA_')) {
             return fileName.split('_')[1];
         } else {
-            return fileName.split('_')[2].split('-')[0];
+            const domain = fileName.split('_')[2]
+            return domain.includes('-') ? domain.split('-')[0] : domain;
         }
     }
 }
@@ -90,13 +91,12 @@ function getTmxFiles(tmDir) {
 function getMappedBatches(rootDirPath) {
     const settingsFile = path.join(rootDirPath, 'omegat.project');
     const content = fs.readFileSync(settingsFile, 'utf8');
-    const $ = cheerio.load(content);
-
-    const repositories = $('mapping[local^="source"]');
-    return repositories.map((_, repo) => repo.attribs.local.split('/')[1]).get();
+    const batches = content.match(/(?<=<mapping local="source\/).*?(?=")/g) || [];
+    // return repos.map(repo => repo.split('/')[1]);
+    return batches;
 }
 
-function pruneTmxFiles(tmDirPath) {
+function arrangeTmxFiles(tmDirPath) {
     const batches = getMappedBatches(repo);
     const currentDomains = getBatchDomains(batches);
     const penaltyDir = 'penalty-05';
@@ -120,4 +120,4 @@ const allowedDomains = {
 const rootDirPath = repo;
 const tmDirPath = path.join(rootDirPath, 'tm');
 
-pruneTmxFiles(tmDirPath);
+arrangeTmxFiles(tmDirPath);
