@@ -3,8 +3,6 @@
 */
 
 
-
-
 props = project.projectProperties
 
 files = project.projectFiles
@@ -29,7 +27,9 @@ project.transMemories.each { filepath, tmx ->
 	console.println(tmxBaseName)
 
     prunedEntries = tmx.entries.findAll{ sourceSegments.contains(it.source) }
-    // and tmxBaseName == parentFolder of file containing the sourceSegment
+    // two conditions must be met for an entry to be included:
+    // 1. sourceSegments.contains(it.source) <-- already in the code
+    // 2. tmxBaseName == parentFolder of file containing the sourceSegment <-- todo
 
     // writeTMX(filepath, prunedEntries)
 }
