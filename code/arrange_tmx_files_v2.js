@@ -1,3 +1,5 @@
+/* like v1 but using xml2js and re instead of cheerio to extract relevant repository mappings */ 
+
 const fs = require('fs');
 const path = require('path');
 const { parseString } = require('xml2js');
