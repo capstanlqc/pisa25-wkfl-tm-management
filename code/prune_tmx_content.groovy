@@ -2,32 +2,37 @@
 
 */
 
+
+
+
 props = project.projectProperties
 
 files = project.projectFiles
 
 sourceSegments = []
+files.each { file -> 
 
-files.each { fi -> 
-	def sourceSegmentsInFiles = fi.entries.collect {
+	// get parentFolder of file (=batch)
+	// use SrcText as key and parentFolder as value in sourceSegments (map)
+
+	def sourceSegmentsInFiles = file.entries.collect {
 		it.getSrcText()
 	}
 	sourceSegments.addAll(sourceSegmentsInFiles)
 }
 
 project.transMemories.each { filepath, tmx -> 
-    // filename = filepath.substring(props.getTMRoot().length())
-    prunedEntries = tmx.entries.findAll{ sourceSegments.contains(it.source) }    
+
+	tmxFileName = tmx.getName().toString() // or
+	// tmxFileName = new File(filepath).name
+    tmxBaseName = tmxFileName.replace(".tmx", "")
+	console.println(tmxBaseName)
+
+    prunedEntries = tmx.entries.findAll{ sourceSegments.contains(it.source) }
+    // and tmxBaseName == parentFolder of file containing the sourceSegment
 
     // writeTMX(filepath, prunedEntries)
 }
-
-prunedEntries.each {
-	console.println(it.source)
-}
-
-
-
 
 
 return
