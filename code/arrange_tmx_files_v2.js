@@ -66,7 +66,7 @@ function moveFile(origPath, destPath) {
     }
 }
 
-function sortTmxFile(filePath, currentDomains, penaltyDir = 'penalty-05') {
+function sortTmxFile(filePath, currentDomains, penaltyDir = 'penalty-100') {
     const tmxDomain = getDomain(filePath);
 
     if (fs.existsSync(filePath)) {
@@ -101,7 +101,7 @@ function getMappedBatches(rootDirPath) {
 function arrangeTmxFiles(tmDirPath) {
     const batches = getMappedBatches(repo);
     const currentDomains = getBatchDomains(batches);
-    const penaltyDir = 'penalty-05';
+    const penaltyDir = 'penalty-100';
 
     const tmxFiles = getTmxFiles(tmDirPath);
 

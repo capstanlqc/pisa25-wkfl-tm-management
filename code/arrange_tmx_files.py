@@ -73,7 +73,7 @@ def move_file(orig_path, dest_path):
             print(f"An error occurred: {e}")
 
 
-def sort_tmx_file(file_path, current_domains, penalty_dir = "penalty-05"):
+def sort_tmx_file(file_path, current_domains, penalty_dir = "penalty-100"):
 
     tmx_domain = get_domain(file_path)
     
@@ -116,7 +116,7 @@ def arrange_tmx_files(tm_dir_path):
     current_domains = get_batch_domains(batches)
 
     tmx_files = get_tmx_files(tm_dir_path)
-    penalty_dir = "penalty-05"
+    penalty_dir = "penalty-100"
 
     for tmx_file in tmx_files:
         sort_tmx_file(tmx_file, current_domains, penalty_dir)

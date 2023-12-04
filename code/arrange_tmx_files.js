@@ -67,7 +67,7 @@ function moveFile(origPath, destPath) {
     }
 }
 
-function sortTmxFile(filePath, currentDomains, penaltyDir = 'penalty-05') {
+function sortTmxFile(filePath, currentDomains, penaltyDir = 'penalty-100') {
     // get domain of the TMX file
     const tmxDomain = getDomain(filePath);
 
@@ -114,7 +114,7 @@ function arrangeTmxFiles(tmDirPath) {
     // get the domains in the batches currently mapped
     const currentDomains = getBatchDomains(batches);
     // set the penalty
-    const penaltyDir = 'penalty-05';
+    const penaltyDir = 'penalty-100';
 
     const tmxFiles = getTmxFiles(tmDirPath);
 
