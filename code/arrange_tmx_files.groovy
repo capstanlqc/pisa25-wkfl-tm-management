@@ -18,9 +18,10 @@ import gen.core.project.RepositoryDefinition;
 import gen.core.project.RepositoryMapping;
 import org.omegat.core.team2.RemoteRepositoryProvider;
 import groovy.io.FileType
+import org.omegat.util.StaticUtils
 
 
-def pruneTMXs(props, String dir) throws Exception {
+def arrangeTMXs(props, String dir) throws Exception {
 
 	sourceDirPath = props.getSourceRoot()
 	console.println("props.getSourceRoot() has type : " + sourceDirPath.getClass())
@@ -36,10 +37,18 @@ def pruneTMXs(props, String dir) throws Exception {
 	// batches = listSubDirs(sourceDirPath)
 	batches = getSourceFilesInRepo()
 
-	// batches = getBatchFolders(remoteFiles)
+	batches.each { it -> 
+		console.println("batch: ${it}")
+	}
+
+	// batchesZ = getBatchFolders(remoteFiles)
 
 	// get the list of tmx files added to the tm folder
 	tmxFiles = listFiles(tmDirPath)
+	tmxFiles.each { it -> 
+		console.println("tmx file: ${it}")
+	}
+
 
 	// console.println("List ${tmxFiles} contains ${tmxFiles.size()} files")
 	// 244:         dir.deleteDir()
@@ -56,6 +65,9 @@ def pruneTMXs(props, String dir) throws Exception {
 	//	"19_CGA_REA_T", "21_COSP_REA-A_T", "22_COSP_REA-B_T", "23_COSP_MAT-A_T", "24_COSP_MAT-B_T", "25_COSP_SCI-A_N", "26_COSP_SCI-A_T"]
 
 	wantedDomains = getBatchDomains(batches)
+	wantedDomains.each { it -> 
+		console.println("wanted domain: ${it}")
+	}
 
 	hasChanged = false
 	tmxFiles.each { file ->
@@ -66,6 +78,14 @@ def pruneTMXs(props, String dir) throws Exception {
 	// 	reloadProjectOnetime()
 	// 	// org.omegat.gui.main.ProjectUICommands.projectReload();
 	// }	
+}
+
+def quiesceTMXs(pros) {
+	tmDirPath = props.getTMRoot()
+	tmxFiles = listFiles(tmDirPath)
+	tmxFiles.each { file ->
+		deleteUnwantedTMX(file)
+	}
 }
 
 
@@ -100,7 +120,7 @@ def getDomain(f) {
 
 	// console.println("::: Filename is '${fileName}'")
 
-	if (fileName.startsWith("PISA_") && ( fileName.endsWith("tmx") || fileName.endsWith("tmx.zip") )) {
+	if ( fileName.startsWith("PISA_") && ( fileName.contains("tmx") || fileName.contains("tmx.zip") )) {
 		// console.println("::: ${fileName} is a TM")
 		tentativeDomain = fileName.split("_")[2]
 		
@@ -116,7 +136,7 @@ def getDomain(f) {
 				return domain
 			}
 		}
-		return tentativeDomain // else
+		return tentativeDomain.split("-")[0] // else
 	} else {
 		// console.println(">>> ${fileName} is a batch")
 		
@@ -139,12 +159,17 @@ def deleteUnwantedTMX(file) {
 
 	// console.println("::: Check whether file ${file} has a wanted domain")
 	def tmxDomain = getDomain(file)
+	console.println("-----------------")
+	console.println(">>> tmxDomain: ${tmxDomain}")
+	wantedDomains.each {
+		console.println(">>> wantedDomain: ${it}")
+	}
 	// console.println("::: File ${file}'s domain is ${x}")
 	if (!wantedDomains.contains(tmxDomain)) {
 		console.println(">>> Delete ${file} !!!")
 		try {
 			// new File(parentDirAbsPath, fileName).delete()
-			file.delete() 
+			// file.delete() 
 			hasChanged = true;
 		} catch (Exception e) {
 			console.println(e);
@@ -152,12 +177,30 @@ def deleteUnwantedTMX(file) {
 	}
 }
 
+
+
+
 def listFiles(tmDir) {
 	def list = []
 	def dir = new File(tmDir)
 	dir.eachFileRecurse (FileType.FILES) { file ->
-		fileName = file.toString()
-		if (fileName.contains("MS2022") && ( fileName.endsWith("tmx") || fileName.endsWith("tmx.zip") )) {
+		
+		// fileName = file.toString()
+		fileName = file.getName()
+		
+		console.println("type of fileName: ${fileName.getClass()}")
+		console.println(">>> CONSIDERING file ${fileName} !!!")
+
+
+		if (
+			fileName ==~ /^\d{2}_(QQ[SA]|(COSP?|CGA)_(LDW|XYZ|REA|MAT|SCI)(-[ABC])?)_[NT].tmx(\.zip)?(\.x)?$/ || 
+			fileName ==~ /^PISA.*MS2022.tmx(\.zip)?(\.x)?$/ 
+
+				// ( fileName.contains("MS2022") || fileName ==~ /^\d{2}_(QQ[SA]|(COSP?|CGA)_(LDW|XYZ|REA|MAT|SCI)(-[ABC])?)_[NT].tmx(.zip)?$/ )
+				// &&
+				// ( fileName.endsWith("tmx") || fileName.endsWith("tmx.zip") )
+			) 
+		{
 			list << file
 		}
 	}
@@ -183,8 +226,8 @@ def withoutLeadingSlash(s) {
 
 
 def getSourceFilesInRepo() {
-	batchesX = []
-	List<String> remoteFiles = new ArrayList<String>()
+	
+	// List<String> remoteFiles = new ArrayList<String>()
 	for (def repoDefinition in props.repositories) {
 		console.println("repoDefinition: " + repoDefinition)
 		def repositoryDir = getRepositoryDir(projectRoot, repoDefinition);
@@ -193,31 +236,10 @@ def getSourceFilesInRepo() {
 		// x = repoDefinition.getMapping() // type class java.util.ArrayList
 
 		// batchesZ = repoDefinition.getMapping().findAll { it.getLocal().startsWith("source")).split("/")[1] }
-		batchesZ = repoDefinition.getMapping().findAll { it.getLocal().startsWith("source") }
+		def batches = repoDefinition.getMapping().findAll { it.getLocal().startsWith("source") }
                   .collect { it.getLocal().split("/")[1] }
-				
-		// for (def repoMapping in repoDefinition.getMapping()) {
-		
-		// 	if (repoMapping.getLocal().startsWith("source")) {
-		// 		batch = repoMapping.getLocal().split("/")[1]
-		// 		batchesX << batch
-		// 	}
-
-
-		// 	// // Only look at directory mappings
-		// 	// if (repoMapping.getLocal().startsWith(localDir.getName())) {
-		// 	// 	def from = new File(repositoryDir, withoutLeadingSlash(repoMapping.getRepository()));
-		// 	// 	def remoteDirFiles = FileUtil.buildRelativeFilesList(from, null, null);
-		// 	// 	for (def remoteFile in remoteDirFiles) {
-		// 	// 		// Build the mapped path name as it will be found in the local directory
-		// 	// 		def targetPath = new File(new File(projectRoot, repoMapping.getLocal()), remoteFile).toPath();
-		// 	// 		def mappedLocal = localDir.toPath().relativize(targetPath).toString().replace('\\', '/');
-		// 	// 		remoteFiles.add(mappedLocal);
-		// 	// 	}
-		// 	// }
-		// }
 	}
-	return batchesZ
+	return batches
 }
 
 
@@ -238,27 +260,57 @@ def reloadProjectOnetime() {
 
 
 // logic
+props = project.projectProperties
 
-if (eventType == LOAD) {
-    // Skip sync
-    if (skipSync(LOAD)) {
-		LOAD.skipSync = false // reset the flag
-		return
-    }
+switch (eventType) {
+    case LOAD:
+        // Skip traverse
+        if (skipSync(LOAD)) {
+			LOAD.skipSync = false // reset the flag
+			return
+        }
 
-	VERBOSE = true;
+		VERBOSE = true;
 
-	// abort if a team project is not opened
-	props = project.projectProperties
-	if (!props) { //  || !props.repositories
-    	final def title = 'TM Pruning';
-    	// @todo: does this actually check that the project is a team project?
-    	final def msg = 'No team project opened.';
-    	showMessageDialog(null, msg, title, INFORMATION_MESSAGE);
-    	return;
-    }
+		// abort if a team project is not opened
+		props = project.projectProperties
+		if (!props) { //  || !props.repositories
+	    	final def title = 'TM Pruning';
+	    	// @todo: does this actually check that the project is a team project?
+	    	final def msg = 'No team project opened.';
+	    	showMessageDialog(null, msg, title, INFORMATION_MESSAGE);
+	    	return;
+	    }
 
-	pruneTMXs(props, dir = "tm")
-	console.println("TMX files pruned now.")
+	    /**/
+	    config_dir = StaticUtils.getConfigDir()
+		console.println("config_dir: " + config_dir)
+		def currentProjectFile = new File(config_dir.toString() + File.separator + "script" + File.separator + 'current_project_path.txt')
+		String projectRoot = props.projectRootDir
+		currentProjectFile.write(projectRoot)
+
+
+		arrangeTMXs(props, dir = "tm")
+		console.println("TMX files arranged now.")
+
+		break
+
+	case CLOSE:
+
+		/**/
+		config_dir = StaticUtils.getConfigDir()
+		console.println("config_dir: " + config_dir)
+		// unable to access props
+		// a workaround could be to save the project path on LOAD in config_dir
+		// then on CLOSE get that path, delete TMX files in path/tm and delete the path file
+		// drawback: it would require checking whether that path file is there on LOAD
+		// if a path file is found, the project closes. in other words, avoid two or more projects open simultaneously
+
+		// props = project.projectProperties
+		// quiesceTMXs(props)
+		// console.println("TMX files quiesced now.")
+
+        break
+    default:
+        return null // No output
 }
-
