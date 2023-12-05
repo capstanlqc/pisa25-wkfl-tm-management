@@ -71,7 +71,7 @@ def arrangeTMXs(props, String dir) throws Exception {
 
 	hasChanged = false
 	tmxFiles.each { file ->
-		deleteUnwantedTMX(file)
+		activateWantedTMX(file)
 	}
 
 	// if (hasChanged && eventType == LOAD) {
@@ -84,7 +84,7 @@ def quiesceTMXs(pros) {
 	tmDirPath = props.getTMRoot()
 	tmxFiles = listFiles(tmDirPath)
 	tmxFiles.each { file ->
-		deleteUnwantedTMX(file)
+		activateWantedTMX(file)
 	}
 }
 
@@ -106,7 +106,7 @@ def getBatchDomains(batches) {
 	batches.each { it -> 
 		l << getDomain(it)
 	}
-	return l
+	return l.unique()
 }
 
 def getDomain(f) {
@@ -155,7 +155,7 @@ def getDomain(f) {
 	}
 }
 
-def deleteUnwantedTMX(file) {
+def activateWantedTMX(file) {
 
 	// console.println("::: Check whether file ${file} has a wanted domain")
 	def tmxDomain = getDomain(file)
@@ -165,11 +165,14 @@ def deleteUnwantedTMX(file) {
 		console.println(">>> wantedDomain: ${it}")
 	}
 	// console.println("::: File ${file}'s domain is ${x}")
-	if (!wantedDomains.contains(tmxDomain)) {
-		console.println(">>> Delete ${file} !!!")
+	if (wantedDomains.contains(tmxDomain)) {
+		console.println(">>> Activate ${file} !!!")
 		try {
 			// new File(parentDirAbsPath, fileName).delete()
 			// file.delete() 
+			def newName = file.toString().replaceFirst(/\.x$/, '')
+			def newFile = new File(newName)
+			file.renameTo(newFile)
 			hasChanged = true;
 		} catch (Exception e) {
 			console.println(e);
@@ -191,16 +194,8 @@ def listFiles(tmDir) {
 		console.println("type of fileName: ${fileName.getClass()}")
 		console.println(">>> CONSIDERING file ${fileName} !!!")
 
-
-		if (
-			fileName ==~ /^\d{2}_(QQ[SA]|(COSP?|CGA)_(LDW|XYZ|REA|MAT|SCI)(-[ABC])?)_[NT].tmx(\.zip)?(\.x)?$/ || 
-			fileName ==~ /^PISA.*MS2022.tmx(\.zip)?(\.x)?$/ 
-
-				// ( fileName.contains("MS2022") || fileName ==~ /^\d{2}_(QQ[SA]|(COSP?|CGA)_(LDW|XYZ|REA|MAT|SCI)(-[ABC])?)_[NT].tmx(.zip)?$/ )
-				// &&
-				// ( fileName.endsWith("tmx") || fileName.endsWith("tmx.zip") )
-			) 
-		{
+		// for batches: fileName ==~ /^\d{2}_(QQ[SA]|(COSP?|CGA)_(LDW|XYZ|REA|MAT|SCI)(-[ABC])?)_[NT].tmx(\.zip)?(\.x)?$/ || 
+		if (fileName ==~ /^PISA.*MS2022.tmx(\.zip)?(\.x)?$/) {
 			list << file
 		}
 	}
@@ -226,8 +221,8 @@ def withoutLeadingSlash(s) {
 
 
 def getSourceFilesInRepo() {
-	
-	// List<String> remoteFiles = new ArrayList<String>()
+	batchesX = []
+	List<String> remoteFiles = new ArrayList<String>()
 	for (def repoDefinition in props.repositories) {
 		console.println("repoDefinition: " + repoDefinition)
 		def repositoryDir = getRepositoryDir(projectRoot, repoDefinition);
@@ -236,10 +231,10 @@ def getSourceFilesInRepo() {
 		// x = repoDefinition.getMapping() // type class java.util.ArrayList
 
 		// batchesZ = repoDefinition.getMapping().findAll { it.getLocal().startsWith("source")).split("/")[1] }
-		def batches = repoDefinition.getMapping().findAll { it.getLocal().startsWith("source") }
+		batchesZ = repoDefinition.getMapping().findAll { it.getLocal().startsWith("source") }
                   .collect { it.getLocal().split("/")[1] }
 	}
-	return batches
+	return batchesZ
 }
 
 
@@ -301,12 +296,9 @@ switch (eventType) {
 		config_dir = StaticUtils.getConfigDir()
 		console.println("config_dir: " + config_dir)
 		// unable to access props
-		// a workaround could be to save the project path on LOAD in config_dir
-		// then on CLOSE get that path, delete TMX files in path/tm and delete the path file
-		// drawback: it would require checking whether that path file is there on LOAD
-		// if a path file is found, the project closes. in other words, avoid two or more projects open simultaneously
 
 		// props = project.projectProperties
+		// // deactivate all TMX files on CLOSE
 		// quiesceTMXs(props)
 		// console.println("TMX files quiesced now.")
 
