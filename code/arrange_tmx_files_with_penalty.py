@@ -22,7 +22,7 @@ def get_domain(file):
     file_name = file.split("/")[-1] if "/" in file else file
     # print(f"::: Get domain of '{file_name}'")
 
-    if file_name.startswith("PISA_") and (file_name.endswith("tmx") or file_name.endswith("tmx.zip")):
+    if file_name.startswith("PISA_") and (file_name.endswith("tmx.x") or file_name.endswith("tmx.zip.x")):
         # for tmx files
         tentative_domain = file_name.split("_")[2]
         # if tentative_domain.endswith("Q"):
@@ -73,12 +73,13 @@ def move_file(orig_path, dest_path):
             print(f"An error occurred: {e}")
 
 
-def sort_tmx_file(file_path, current_domains, penalty_dir = "penalty-100"):
+def sort_trend_tmx_file_by_domain(file_path, current_domains, penalty_dir = "penalty-100"):
 
     tmx_domain = get_domain(file_path)
     
     if os.path.exists(file_path):
         if tmx_domain in current_domains and penalty_dir in file_path:
+
             # remove penalty
             new_file_path = file_path.replace(f"/{penalty_dir}/", "/")
             move_file(file_path, new_file_path)
@@ -91,9 +92,23 @@ def sort_tmx_file(file_path, current_domains, penalty_dir = "penalty-100"):
             delete_file(file_path)
 
 
-def get_tmx_files(tm_dir):
+def sort_step_tmx_file_by_batch(file_path, batches, penalty_dir = "penalty-100"):
 
-    origin_dirs = ["trend", "prev", "next"]
+    file_name = file_path.split("/")[-1] if "/" in file_path else file_path
+    basename = file_name.split(".")[0]
+    if basename in batches and penalty_dir in file_path:
+        # remove penalty
+        new_file_path = file_path.replace(f"/{penalty_dir}/", "/")
+        move_file(file_path, new_file_path)
+    elif basename not in batches and penalty_dir not in file_path:
+        # add penalty
+        new_file_path = file_path.replace(f"tm/", f"tm/{penalty_dir}/")
+        move_file(file_path, new_file_path)
+
+
+def get_tmx_files(tm_dir, origin_dirs):
+
+    # origin_dirs = ["trend"] # ["prev", "next"]
     files = [glob(f"{tm_dir}/**/{origin_dir}/*.tmx*", recursive=True) for origin_dir in origin_dirs]
     return list(chain.from_iterable(files))
 
@@ -114,12 +129,15 @@ def arrange_tmx_files(tm_dir_path):
 
     batches = get_mapped_batches(root_dir_path)
     current_domains = get_batch_domains(batches)
-
-    tmx_files = get_tmx_files(tm_dir_path)
     penalty_dir = "penalty-100"
 
-    for tmx_file in tmx_files:
-        sort_tmx_file(tmx_file, current_domains, penalty_dir)
+    # trend TMs
+    for tmx_file in get_tmx_files(tm_dir_path, ["trend"]):
+        sort_trend_tmx_file_by_domain(tmx_file, current_domains, penalty_dir)
+
+    # other steps
+    for tmx_file in get_tmx_files(tm_dir_path, ["prev", "next"]):
+        sort_step_tmx_file_by_batch(tmx_file, batches, penalty_dir)
 
 
 if __name__ == "__main__":
