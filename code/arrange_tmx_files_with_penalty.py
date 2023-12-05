@@ -22,7 +22,7 @@ def get_domain(file):
     file_name = file.split("/")[-1] if "/" in file else file
     # print(f"::: Get domain of '{file_name}'")
 
-    if file_name.startswith("PISA_") and (file_name.endswith("tmx.x") or file_name.endswith("tmx.zip.x")):
+    if file_name.startswith("PISA_") and (file_name.endswith("tmx") or file_name.endswith("tmx.zip")):
         # for tmx files
         tentative_domain = file_name.split("_")[2]
         # if tentative_domain.endswith("Q"):
