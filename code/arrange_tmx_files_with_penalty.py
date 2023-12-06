@@ -79,7 +79,6 @@ def sort_trend_tmx_file_by_domain(file_path, current_domains, penalty_dir = "pen
     
     if os.path.exists(file_path):
         if tmx_domain in current_domains and penalty_dir in file_path:
-
             # remove penalty
             new_file_path = file_path.replace(f"/{penalty_dir}/", "/")
             move_file(file_path, new_file_path)
@@ -96,14 +95,16 @@ def sort_step_tmx_file_by_batch(file_path, batches, penalty_dir = "penalty-100")
 
     file_name = file_path.split("/")[-1] if "/" in file_path else file_path
     basename = file_name.split(".")[0]
-    if basename in batches and penalty_dir in file_path:
-        # remove penalty
-        new_file_path = file_path.replace(f"/{penalty_dir}/", "/")
-        move_file(file_path, new_file_path)
-    elif basename not in batches and penalty_dir not in file_path:
-        # add penalty
-        new_file_path = file_path.replace(f"tm/", f"tm/{penalty_dir}/")
-        move_file(file_path, new_file_path)
+
+    if os.path.exists(file_path):
+        if basename in batches and penalty_dir in file_path:
+            # remove penalty
+            new_file_path = file_path.replace(f"/{penalty_dir}/", "/")
+            move_file(file_path, new_file_path)
+        elif basename not in batches and penalty_dir not in file_path:
+            # add penalty
+            new_file_path = file_path.replace(f"tm/", f"tm/{penalty_dir}/")
+            move_file(file_path, new_file_path)
 
 
 def get_tmx_files(tm_dir, origin_dirs):
