@@ -170,7 +170,7 @@ def activateWantedTMX(file) {
 		try {
 			// new File(parentDirAbsPath, fileName).delete()
 			// file.delete() 
-			def newName = file.toString().replaceFirst(/\.x$/, '')
+			def newName = file.toString().replaceFirst(/\.idle$/, '')
 			def newFile = new File(newName)
 			file.renameTo(newFile)
 			hasChanged = true;
@@ -194,8 +194,8 @@ def listFiles(tmDir) {
 		console.println("type of fileName: ${fileName.getClass()}")
 		console.println(">>> CONSIDERING file ${fileName} !!!")
 
-		// for batches: fileName ==~ /^\d{2}_(QQ[SA]|(COSP?|CGA)_(LDW|XYZ|REA|MAT|SCI)(-[ABC])?)_[NT].tmx(\.zip)?(\.x)?$/ || 
-		if (fileName ==~ /^PISA.*MS2022.tmx(\.zip)?(\.x)?$/) {
+		// for batches: fileName ==~ /^\d{2}_(QQ[SA]|(COSP?|CGA)_(LDW|XYZ|REA|MAT|SCI)(-[ABC])?)_[NT].tmx(\.zip)?(\.idle)?$/ || 
+		if (fileName ==~ /^PISA.*MS2022.tmx(\.zip)?(\.idle)?$/) {
 			list << file
 		}
 	}
