@@ -69,6 +69,13 @@ function moveFile(origPath, destPath) {
 }
 
 function sortTrendTmxFileByDomain(filePath, currentDomains, idleExtension) {
+
+    /*
+      trend TMs (e.g. PISA_el-CY_MAT_MS2022.tmx.zip) are 
+      considered against the domain of the current batch(es)
+    */
+
+
     // get domain of the TMX file
     const tmxDomain = getDomain(filePath);
 
@@ -89,6 +96,16 @@ function sortTrendTmxFileByDomain(filePath, currentDomains, idleExtension) {
 }
 
 function sortStepTmxFileByBatch(filePath, batches, idleExtension) {
+
+    /*
+      @update: 2023-12-06
+
+      new function not included in the previous version: 
+      here, unlike in function sortTrendTmxFileByDomain, 
+      prev/next step TMs (e.g. 01_COS_SCI-A_N.tmx) are considered 
+      against the batch itself, not just the domain
+    */
+
     // get filename
     const fileName = filePath.includes('/') ? filePath.split('/').pop() : filePath;
     // remove extensions
