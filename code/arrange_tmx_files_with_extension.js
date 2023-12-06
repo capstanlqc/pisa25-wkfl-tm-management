@@ -18,15 +18,19 @@ function getDomain(file) {
 
     // find the domain depending on whether it is a batch TM or batch folder or a trend TM
     if (fileName.startsWith('PISA_') && fileName.match(pattern)) {
+        // e.g. PISA_el-CY_MAT_MS2022.tmx.zip, PISA_el-CY_REA_MS2022.tmx.zip, PISA_el-CY_SCQ_MS2022.tmx, etc.
         const tentativeDomain = fileName.split('_')[2];
         if (allowedDomains['QQS'].includes(tentativeDomain) || allowedDomains['QQA'].includes(tentativeDomain)) {
+            // e.g. PISA_el-CY_SCQ_MS2022.tmx (QQA), PISA_el-CY_STQ_MS2022.tmx (QQS), etc.
             return Object.keys(allowedDomains).find(key => allowedDomains[key].includes(tentativeDomain)) || null;
         }
         return tentativeDomain;
     } else {
         if (fileName.includes('_QQS_') || fileName.includes('_QQA_')) {
+            // e.g. 04_QQS_N, 05_QQA_N
             return fileName.split('_')[1];
         } else {
+            // e.g. 01_COS_SCI-A_N.tmx, 19_CGA_REA_T, 21_COSP_REA-A_T, etc.
             const domain = fileName.split('_')[2]
             return domain.includes('-') ? domain.split('-')[0] : domain;
         }
