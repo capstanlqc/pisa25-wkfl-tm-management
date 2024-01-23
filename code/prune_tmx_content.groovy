@@ -1,10 +1,11 @@
-/* :name=Prune TM content :description=Removes unwanted entries
-
+/* :name=Prune TM :description=Remove from TMX file entrie not found in a certain folder in the project
+ *
+ * @author	Manuel Souto Pico
+ * @version	0.0.1
 */
 
-
+/*
 props = project.projectProperties
-
 files = project.projectFiles
 
 sourceSegments = []
@@ -18,21 +19,38 @@ files.each { file ->
 	}
 	sourceSegments.addAll(sourceSegmentsInFiles)
 }
+*/
 
+// collect batch and source text for all segments in all released batches
+entriesPerBatch = [:]
+project.allEntries.each { ste ->
+
+	// def source = ste.getProperties().toString()
+
+	def sourceText = ste.getSrcText()
+	def batch = ste.key.file.split("/")[0]
+	if (entriesPerBatch[batch]) {
+    	entriesPerBatch[batch].add(sourceText)
+	} else {
+		entriesPerBatch[batch] = []
+		entriesPerBatch[batch].add(sourceText)
+	}
+}
+
+console.println("entriesPerBatch: ${entriesPerBatch}")
+
+// collect all source texts in every batch TM
+prunedEntries = []
 project.transMemories.each { filepath, tmx -> 
+
+	// tmx.entries is a list (more precisely: class java.util.Collections$UnmodifiableRandomAccessList)
 
 	tmxFileName = tmx.getName().toString() // or
 	// tmxFileName = new File(filepath).name
     tmxBaseName = tmxFileName.replace(".tmx", "")
-	console.println(tmxBaseName)
-
-    prunedEntries = tmx.entries.findAll{ sourceSegments.contains(it.source) }
-    // two conditions must be met for an entry to be included:
-    // 1. sourceSegments.contains(it.source) <-- already in the code
-    // 2. tmxBaseName == parentFolder of file containing the sourceSegment <-- todo
-
-    // writeTMX(filepath, prunedEntries)
+	
+    prunedEntries = tmx.entries.findAll{ entriesPerBatch[tmxBaseName].contains(it.source) }
+    writeTMX(filepath, prunedEntries)
 }
-
 
 return
