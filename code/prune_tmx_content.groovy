@@ -4,8 +4,12 @@
  * @version	0.0.1
 */
 
-/*
+/* import org.omegat.util.TMXWriter2 */
+import org.omegat.util.TMXWriter
+
 props = project.projectProperties
+
+/*
 files = project.projectFiles
 
 sourceSegments = []
@@ -40,7 +44,6 @@ project.allEntries.each { ste ->
 console.println("entriesPerBatch: ${entriesPerBatch}")
 
 // collect all source texts in every batch TM
-prunedEntries = []
 project.transMemories.each { filepath, tmx -> 
 
 	// tmx.entries is a list (more precisely: class java.util.Collections$UnmodifiableRandomAccessList)
@@ -49,8 +52,26 @@ project.transMemories.each { filepath, tmx ->
 	// tmxFileName = new File(filepath).name
     tmxBaseName = tmxFileName.replace(".tmx", "")
 	
-    prunedEntries = tmx.entries.findAll{ entriesPerBatch[tmxBaseName].contains(it.source) }
-    writeTMX(filepath, prunedEntries)
+    def prunedEntries = tmx.entries.findAll{ entriesPerBatch[tmxBaseName].contains(it.source) }
+
+    /*
+     * Won't work in CapStan OmegaT because writer2 only accepts project-save entries
+     * (this has been changed in OmegaT 5.8)
+    def writer = new TMXWriter2(filepath + ".tmp", props.sourceLanguage, props.targetLanguage,
+		props.isSentenceSegmentingEnabled(), false, false)
+	prunedEntries.each { entry ->
+		
+		// writer.writeEntry(entry.source, entry.translation, entry, propValues)
+	}
+	*/
+	
+	// solution with old class TMXWriter
+	def data = new java.util.HashMap<String, org.omegat.core.data.PrepareTMXEntry>() 
+	prunedEntries.each { entry -> data[entry.source] = entry }
+	def destTmp = new File(filepath).path + ".tmp"
+	TMXWriter.buildTMXFile(destTmp, false, false, props, data)
+	def destFinal = new File(filepath)
+	destFinal.delete(); new File(destTmp).renameTo(destFinal)
 }
 
 return
