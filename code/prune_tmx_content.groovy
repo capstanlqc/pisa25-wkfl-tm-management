@@ -1,11 +1,10 @@
-/* :name=Prune TM :description=Remove from TMX file entrie not found in a certain folder in the project
+/* :name=Prune batch TMs :description=Remove from TMX file entrie not found in a certain folder in the project
  *
- * @author	Manuel Souto Pico
- * @version	0.0.1
+ * @author	Manuel Souto Pico, Thomas Cordonnier
+ * @version	1.0.0
 */
 
-/* import org.omegat.util.TMXWriter2 */
-import org.omegat.util.TMXWriter
+import org.omegat.util.TMXWriter2 
 
 props = project.projectProperties
 
@@ -30,7 +29,6 @@ entriesPerBatch = [:]
 project.allEntries.each { ste ->
 
 	// def source = ste.getProperties().toString()
-
 	def sourceText = ste.getSrcText()
 	def batch = ste.key.file.split("/")[0]
 	if (entriesPerBatch[batch]) {
@@ -54,24 +52,32 @@ project.transMemories.each { filepath, tmx ->
 	
     def prunedEntries = tmx.entries.findAll{ entriesPerBatch[tmxBaseName].contains(it.source) }
 
-    /*
-     * Won't work in CapStan OmegaT because writer2 only accepts project-save entries
-     * (this has been changed in OmegaT 5.8)
-    def writer = new TMXWriter2(filepath + ".tmp", props.sourceLanguage, props.targetLanguage,
+    def writer = new TMXWriter2(new java.io.File(filepath + ".tmp"),
+		props.sourceLanguage, props.targetLanguage,
 		props.isSentenceSegmentingEnabled(), false, false)
 	prunedEntries.each { entry ->
-		
-		// writer.writeEntry(entry.source, entry.translation, entry, propValues)
+		def propValues = new java.util.ArrayList<String>()
+		for (org.omegat.util.TMXProp p: entry.otherProperties) {
+			propValues.add(p.getType()); propValues.add(p.getValue());
+		}
+
+		// Find the indices of 'sourceLanguage' and 'targetLanguage'
+		def sourceLangIndex = propValues.indexOf('sourceLanguage')
+		def targetLangIndex = propValues.indexOf('targetLanguage')
+
+		// Remove items starting from 'sourceLanguage' to 'targetLanguage' and beyond
+		def cleanPropValues = propValues.clone().subList(0, Math.min(sourceLangIndex, targetLangIndex))
+
+		// method with lot of parameters is the only one common between OmegaT 5.7 and later versions
+		writer.writeEntry(entry.source, entry.translation, entry.note, entry.creator, entry.creationDate,
+            entry.changer, entry.changeDate, cleanPropValues)
 	}
-	*/
+	writer.close()
 	
-	// solution with old class TMXWriter
-	def data = new java.util.HashMap<String, org.omegat.core.data.PrepareTMXEntry>() 
-	prunedEntries.each { entry -> data[entry.source] = entry }
-	def destTmp = new File(filepath).path + ".tmp"
-	TMXWriter.buildTMXFile(destTmp, false, false, props, data)
 	def destFinal = new File(filepath)
+	def destTmp = new File(filepath).path + ".tmp"
 	destFinal.delete(); new File(destTmp).renameTo(destFinal)
+	
 }
 
 return
