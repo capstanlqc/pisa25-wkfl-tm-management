@@ -29,6 +29,7 @@ entriesPerBatch = [:]
 project.allEntries.each { ste ->
 
 	// def source = ste.getProperties().toString()
+
 	def sourceText = ste.getSrcText()
 	def batch = ste.key.file.split("/")[0]
 	if (entriesPerBatch[batch]) {
@@ -58,19 +59,13 @@ project.transMemories.each { filepath, tmx ->
 	prunedEntries.each { entry ->
 		def propValues = new java.util.ArrayList<String>()
 		for (org.omegat.util.TMXProp p: entry.otherProperties) {
+			if (p.getType().contains("Language")) continue;
 			propValues.add(p.getType()); propValues.add(p.getValue());
 		}
 
-		// Find the indices of 'sourceLanguage' and 'targetLanguage'
-		def sourceLangIndex = propValues.indexOf('sourceLanguage')
-		def targetLangIndex = propValues.indexOf('targetLanguage')
-
-		// Remove items starting from 'sourceLanguage' to 'targetLanguage' and beyond
-		def cleanPropValues = propValues.clone().subList(0, Math.min(sourceLangIndex, targetLangIndex))
-
 		// method with lot of parameters is the only one common between OmegaT 5.7 and later versions
 		writer.writeEntry(entry.source, entry.translation, entry.note, entry.creator, entry.creationDate,
-            entry.changer, entry.changeDate, cleanPropValues)
+            entry.changer, entry.changeDate, propValues)
 	}
 	writer.close()
 	
