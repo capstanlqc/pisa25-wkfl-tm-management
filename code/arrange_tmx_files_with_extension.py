@@ -121,7 +121,7 @@ def get_mapped_batches(root_dir_path):
         content = f.read()
     bs_content = bs(content, "xml")
 
-    mappings = bs_content.find_all("mapping", attrs={'local': re.compile(r"source")})
+    mappings = bs_content.find_all("mapping", attrs={'local': re.compile(r"^source")})
     return [mapping.attrs['local'].split("/")[1] for mapping in mappings]
 
 
