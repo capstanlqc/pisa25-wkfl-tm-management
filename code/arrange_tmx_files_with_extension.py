@@ -76,7 +76,7 @@ def move_file(orig_path, dest_path):
 
 def sort_trend_tmx_file_by_domain(file_path, current_domains, idle_extension = ".idle"):
 
-    tmx_domain = get_domain(file_path)
+    tmx_domain = get_domain(file_path).removeprefix("CGA-").removesuffix("New").removesuffix("Trend")
     
     if os.path.exists(file_path):
         if tmx_domain in current_domains and file_path.endswith(idle_extension):
