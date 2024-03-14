@@ -132,7 +132,7 @@ def arrange_tmx_files(tm_dir_path):
     idle_extension = ".idle"
 
     # trend TMs
-    for tmx_file in get_tmx_files(tm_dir_path, ["trend"]):
+    for tmx_file in get_tmx_files(tm_dir_path, ["trend", "new"]):
         sort_trend_tmx_file_by_domain(tmx_file, current_domains)
 
     # other steps
