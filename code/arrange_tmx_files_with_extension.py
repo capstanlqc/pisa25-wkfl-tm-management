@@ -6,9 +6,30 @@ from bs4 import BeautifulSoup as bs
 import re
 from glob import glob
 from itertools import chain
+import fnmatch
 
 # unique argument: path to the repo root folder
 repo = sys.argv[1:][0]
+
+
+def search_file_in_directory(directory, filename):
+    # Iterate through all files and subdirectories in the given directory
+    for root, dirs, files in os.walk(directory):
+        # Check if the filename exists in the current directory
+        if filename in files:
+            return True
+    return False
+
+
+def has_new_version(file_path, tmx_domain, idle_extension = ".idle"):
+    filename = os.path.split(file_path)[-1]
+    if trend_tag in filename and tmx_domain in filename:
+        new_version_fname = filename.replace(trend_tag, new_tag).removesuffix(idle_extension)
+        if search_file_in_directory(repo, new_version_fname):
+            if not filename.endswith(idle_extension):
+                new_file_path = file_path + idle_extension
+                move_file(file_path, new_file_path)
+            return True
 
 
 def get_batch_domains(batches):
@@ -74,14 +95,17 @@ def move_file(orig_path, dest_path):
             print(f"An error occurred: {e}")
 
 
-def sort_trend_tmx_file_by_domain(file_path, current_domains, idle_extension = ".idle"):
+def sort_ref_tmx_file_by_domain(file_path, current_domains, idle_extension = ".idle"):
 
     tmx_domain = get_domain(file_path).removeprefix("CGA-").removesuffix("New").removesuffix("Trend")
-    
+
+    if has_new_version(file_path, tmx_domain):
+        return
+
     if os.path.exists(file_path):
         if tmx_domain in current_domains and file_path.endswith(idle_extension):
             # remove penalty
-            new_file_path = file_path.rstrip(idle_extension)
+            new_file_path = file_path.removesuffix(idle_extension)
             move_file(file_path, new_file_path)
         elif tmx_domain not in current_domains and not file_path.endswith(idle_extension):
             # add penalty
@@ -98,7 +122,7 @@ def sort_step_tmx_file_by_batch(file_path, batches, idle_extension = ".idle"):
     basename = file_name.split(".")[0]
     if basename in batches and file_path.endswith(idle_extension):
         # remove penalty
-        new_file_path = file_path.rstrip(idle_extension)
+        new_file_path = file_path.removesuffix(idle_extension)
         move_file(file_path, new_file_path)
     elif basename not in batches and not file_path.endswith(idle_extension):
         # add penalty
@@ -125,7 +149,20 @@ def get_mapped_batches(root_dir_path):
     return [mapping.attrs['local'].split("/")[1] for mapping in mappings]
 
 
-def arrange_tmx_files(tm_dir_path):
+if __name__ == "__main__":
+
+    disallowed_domains = ["CRT", "FLQ", "FNL", "WBQ"]
+    allowed_domains = {
+        "QQS": ("STQ", "STQ-UH", "STQ-UO", "ICQ"),
+        "QQA": ("SCQ", "TCQ", "PAQ"),
+        "COS": ("MAT", "REA", "SCI")
+    }
+
+    trend_tag = "MS2022"
+    new_tag   = "FT2025"
+
+    root_dir_path = repo # path to root level in the repo
+    tm_dir_path = os.path.join(root_dir_path, "tm")
 
     batches = get_mapped_batches(root_dir_path)
     current_domains = get_batch_domains(batches)
@@ -133,26 +170,11 @@ def arrange_tmx_files(tm_dir_path):
 
     # trend TMs
     for tmx_file in get_tmx_files(tm_dir_path, ["trend", "new"]):
-        sort_trend_tmx_file_by_domain(tmx_file, current_domains)
+        sort_ref_tmx_file_by_domain(tmx_file, current_domains)
 
     # other steps
     for tmx_file in get_tmx_files(tm_dir_path, ["prev", "next"]):
         sort_step_tmx_file_by_batch(tmx_file, batches)
 
-
-if __name__ == "__main__":
-
-    print()
-
-    disallowed_domains = ["CRT", "XYZ", "FLQ", "FNL", "WBQ"]
-    allowed_domains = {
-        "QQS": ("STQ", "STQ-UH", "STQ-UO", "ICQ"),
-        "QQA": ("SCQ", "TCQ"),
-        "COS": ("MAT", "REA", "SCI")
-    }
-
-    root_dir_path = repo # path to root level in the repo
-    tm_dir_path = os.path.join(root_dir_path, "tm")
-
-    arrange_tmx_files(tm_dir_path)
-
+# todo:
+# - handle  "STQ-UH", "STQ-UO" as domain STQ
