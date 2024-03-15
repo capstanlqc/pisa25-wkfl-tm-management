@@ -26,9 +26,6 @@ def has_new_version(file_path, tmx_domain, idle_extension = ".idle"):
     if trend_tag in filename and tmx_domain in filename:
         new_version_fname = filename.replace(trend_tag, new_tag).removesuffix(idle_extension)
         if search_file_in_directory(repo, new_version_fname):
-            if not filename.endswith(idle_extension):
-                new_file_path = file_path + idle_extension
-                move_file(file_path, new_file_path)
             return True
 
 
@@ -99,11 +96,13 @@ def sort_ref_tmx_file_by_domain(file_path, current_domains, idle_extension = ".i
 
     tmx_domain = get_domain(file_path).removeprefix("CGA-").removesuffix("New").removesuffix("Trend")
 
-    if has_new_version(file_path, tmx_domain):
-        return
-
     if os.path.exists(file_path):
-        if tmx_domain in current_domains and file_path.endswith(idle_extension):
+
+        if has_new_version(file_path, tmx_domain):
+            if not filename.endswith(idle_extension):
+                new_file_path = file_path + idle_extension
+                move_file(file_path, new_file_path)
+        elif tmx_domain in current_domains and file_path.endswith(idle_extension):
             # remove penalty
             new_file_path = file_path.removesuffix(idle_extension)
             move_file(file_path, new_file_path)
