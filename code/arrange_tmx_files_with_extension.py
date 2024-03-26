@@ -12,18 +12,18 @@ import fnmatch
 repo = sys.argv[1:][0]
 
 
-def search_file_in_directories(repo_fpath, folders, filename):
+def search_file_in_directories(dir_path, folders, filename):
     for folder in folders:
-        directory = os.path.join(repo_fpath, folder)
+        directory = os.path.join(dir_path, folder)
         # Iterate through all files and subdirectories in the given directory
         for root, dirs, files in os.walk(directory):
             # Check if the filename exists in the current directory
-            if filename in files:
+            if filename in files or filename+idle_extension in files:
                 return True
     return False
 
 
-def has_new_version(file_path, tmx_domain, idle_extension = ".idle"):
+def has_new_version(file_path, tmx_domain):
     filename = os.path.split(file_path)[-1]
     if trend_tag in filename and tmx_domain in filename:
         new_version_fname = filename.replace(trend_tag, new_tag).removesuffix(idle_extension)
@@ -77,7 +77,7 @@ def delete_file(file):
 def create_dir(dir_path):
     try:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
-        print(f"The folder {dir_path} and any necessary ancestors in the path have been created.")
+        # print(f"The folder {dir_path} and any necessary ancestors in the path have been created.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -95,7 +95,7 @@ def move_file(orig_path, dest_path):
             print(f"An error occurred: {e}")
 
 
-def sort_ref_tmx_file_by_domain(file_path, current_domains, idle_extension = ".idle"):
+def sort_ref_tmx_file_by_domain(file_path, current_domains):
 
     tmx_domain = get_domain(file_path).removeprefix("CGA-").removesuffix("New").removesuffix("Trend")
 
@@ -118,7 +118,7 @@ def sort_ref_tmx_file_by_domain(file_path, current_domains, idle_extension = ".i
             delete_file(file_path)
 
 
-def sort_step_tmx_file_by_batch(file_path, batches, idle_extension = ".idle"):
+def sort_step_tmx_file_by_batch(file_path, batches):
 
     file_name = file_path.split("/")[-1] if "/" in file_path else file_path
     basename = file_name.split(".")[0]
