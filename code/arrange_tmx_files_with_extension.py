@@ -12,12 +12,14 @@ import fnmatch
 repo = sys.argv[1:][0]
 
 
-def search_file_in_directory(directory, filename):
-    # Iterate through all files and subdirectories in the given directory
-    for root, dirs, files in os.walk(directory):
-        # Check if the filename exists in the current directory
-        if filename in files:
-            return True
+def search_file_in_directories(repo_fpath, folders, filename):
+    for folder in folders:
+        directory = os.path.join(repo_fpath, folder)
+        # Iterate through all files and subdirectories in the given directory
+        for root, dirs, files in os.walk(directory):
+            # Check if the filename exists in the current directory
+            if filename in files:
+                return True
     return False
 
 
@@ -25,7 +27,8 @@ def has_new_version(file_path, tmx_domain, idle_extension = ".idle"):
     filename = os.path.split(file_path)[-1]
     if trend_tag in filename and tmx_domain in filename:
         new_version_fname = filename.replace(trend_tag, new_tag).removesuffix(idle_extension)
-        if search_file_in_directory(repo, new_version_fname):
+        folders = ["tm/auto", "tm/enforce"]
+        if search_file_in_directories(repo, folders, new_version_fname):
             return True
 
 
@@ -99,7 +102,7 @@ def sort_ref_tmx_file_by_domain(file_path, current_domains, idle_extension = ".i
     if os.path.exists(file_path):
 
         if has_new_version(file_path, tmx_domain):
-            if not filename.endswith(idle_extension):
+            if not file_path.endswith(idle_extension):
                 new_file_path = file_path + idle_extension
                 move_file(file_path, new_file_path)
         elif tmx_domain in current_domains and file_path.endswith(idle_extension):
@@ -168,12 +171,9 @@ if __name__ == "__main__":
     idle_extension = ".idle"
 
     # trend TMs
-    for tmx_file in get_tmx_files(tm_dir_path, ["trend", "new"]):
+    for tmx_file in get_tmx_files(tm_dir_path, ["trend", "ref"]):
         sort_ref_tmx_file_by_domain(tmx_file, current_domains)
 
     # other steps
     for tmx_file in get_tmx_files(tm_dir_path, ["prev", "next"]):
         sort_step_tmx_file_by_batch(tmx_file, batches)
-
-# todo:
-# - handle  "STQ-UH", "STQ-UO" as domain STQ
