@@ -54,10 +54,12 @@ def get_domain(file):
         return tentative_domain
     else:
         # for batch folders or batch TMs
-        if "_QQS_" in file_name or "_QQA_" in file_name:
+        if "_QQS_" in file_name or "_QQA_" in file_name: # new QQ
             return file_name.split("_")[1]
+        elif "_QQSP_" in file_name or "_QQAP_" in file_name: # trend QQ
+            return file_name.split("_")[1].removesuffix("P")
         else:
-            return file_name.split("_")[2].split("-")[0]
+            return file_name.split("_")[2].split("-")[0] # anything else
 
 
 def delete_file(file):
@@ -118,7 +120,7 @@ def sort_ref_tmx_file_by_domain(file_path, current_domains):
             delete_file(file_path)
 
 
-def sort_step_tmx_file_by_batch(file_path, batches):
+def sort_batch_tmx_file_by_batch(file_path, batches):
 
     file_name = file_path.split("/")[-1] if "/" in file_path else file_path
     basename = file_name.split(".")[0]
@@ -176,4 +178,4 @@ if __name__ == "__main__":
 
     # other steps
     for tmx_file in get_tmx_files(tm_dir_path, ["prev", "next"]):
-        sort_step_tmx_file_by_batch(tmx_file, batches)
+        sort_batch_tmx_file_by_batch(tmx_file, batches)
