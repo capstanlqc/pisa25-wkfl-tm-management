@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 from pathlib import Path
 import sys
@@ -7,9 +9,16 @@ import re
 from glob import glob
 from itertools import chain
 import fnmatch
+import requests
+from rich import print
 
 # unique argument: path to the repo root folder
 repo = sys.argv[1:][0]
+
+def get_langtags():
+    url = 'https://capps.capstan.be/langtags_json.php'
+    response = requests.get(url)
+    return response.json()
 
 
 def search_file_in_directories(dir_path, folders, filename):
@@ -120,15 +129,26 @@ def sort_ref_tmx_file_by_domain(file_path, current_domains):
             delete_file(file_path)
 
 
-def sort_batch_tmx_file_by_batch(file_path, batches):
-
+def get_batch_from_filename(file_path):
+    """ Outputs the base for batch TMs and the part that corresponds to the batch for base TMs""" 
     file_name = file_path.split("/")[-1] if "/" in file_path else file_path
     basename = file_name.split(".")[0]
-    if basename in batches and file_path.endswith(idle_extension):
+
+    if any(x in basename.split("_") for x in langtags):
+        # this is a base TM, hence remove language code
+        return "_".join(basename.split("_")[0:-1])
+    return basename
+
+
+def sort_batch_tmx_file_by_batch(file_path, batches):
+
+    batch = get_batch_from_filename(file_path)
+
+    if batch in batches and file_path.endswith(idle_extension):
         # remove penalty
         new_file_path = file_path.removesuffix(idle_extension)
         move_file(file_path, new_file_path)
-    elif basename not in batches and not file_path.endswith(idle_extension):
+    elif batch not in batches and not file_path.endswith(idle_extension):
         # add penalty
         new_file_path = file_path + idle_extension
         move_file(file_path, new_file_path)
@@ -171,11 +191,12 @@ if __name__ == "__main__":
     batches = get_mapped_batches(root_dir_path)
     current_domains = get_batch_domains(batches)
     idle_extension = ".idle"
+    langtags = [entry["BCP47"] for entry in get_langtags()]
 
     # trend TMs
     for tmx_file in get_tmx_files(tm_dir_path, ["trend", "ref"]):
         sort_ref_tmx_file_by_domain(tmx_file, current_domains)
 
-    # other steps
-    for tmx_file in get_tmx_files(tm_dir_path, ["prev", "next"]):
+    # batch TMs from previous/next step + base TMs (which are organized by batch)
+    for tmx_file in get_tmx_files(tm_dir_path, ["prev", "next", "base", "x-base"]):
         sort_batch_tmx_file_by_batch(tmx_file, batches)
