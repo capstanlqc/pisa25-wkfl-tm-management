@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "pisa25-git-omegat-project-admin"
+version = "0.1.0"
+description = "Arranges TMX by domain on batch transition"
+authors = ["msoutopico <m.soutopico@gmail.com>"]
+readme = "README.md"
+packages = [{include = "pisa25_git_omegat_project_admin"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+beautifulsoup4 = "4.12.2"
+certifi = "2024.2.2"
+charset-normalizer = "3.3.2"
+idna = "3.6"
+lxml = "4.9.2"
+markdown-it-py = "3.0.0"
+mdurl = "0.1.2"
+pygments = "2.17.2"
+requests = "2.31.0"
+rich = "13.7.1"
+soupsieve = "2.5"
+urllib3 = "2.2.1"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "0"
+pdoc = "0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
