@@ -2,5 +2,5 @@ node_modules/**
 bak/**
 venv/**
 code/__pycache__/
-code_bak/
+code_bak/**
 requirements-dev.txt
