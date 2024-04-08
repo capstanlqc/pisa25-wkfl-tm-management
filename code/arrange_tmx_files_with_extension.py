@@ -93,7 +93,8 @@ def has_new_version(file_path: str, tmx_domain: str) -> bool:
     Returns:
         bool: True if a new version exists, False otherwise.
     """
-    filename = os.path.split(file_path)[-1]
+    filename = os.path.basename(file_path)
+
     if trend_tag in filename and tmx_domain in filename:
         new_version_fname = filename.replace(trend_tag, new_tag).removesuffix(idle_extension)
         folders = ["tm/auto", "tm/enforce"]
@@ -113,7 +114,7 @@ def get_domain(file: str) -> str:
         str: Domain extracted from the file name.
     """
     # get file's basename if it's a path (linux specific)
-    file_name: str = file.split("/")[-1] if "/" in file else file
+    file_name: str = os.path.basename(file)
     # defines the pattern to match any TMX's extension (which can be zipped or disabled, or not)
     pattern: str = "\.tmx(\.zip)?(\.idle)?$"
 
@@ -231,13 +232,13 @@ def get_batch_from_filename(file_path: str) -> str:
     Returns:
         str: Batch extracted from the file name.
     """
-    file_name: str = file_path.split("/")[-1] if "/" in file_path else file_path
-    basename: str = file_name.split(".")[0]
+    file_name: str = os.path.basename(file_path)
+    file_stem: str = file_name.split(".")[0]
 
-    if any(x in basename.split("_") for x in locales):
+    if any(x in file_stem.split("_") for x in locales):
         # this is a base TM, hence remove language code
-        return "_".join(basename.split("_")[0:-1])
-    return basename
+        return "_".join(file_stem.split("_")[0:-1])
+    return file_stem
 
 
 def sort_batch_tmx_file_by_batch(file_path: str, batches: list) -> None:
