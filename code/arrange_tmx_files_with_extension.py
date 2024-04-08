@@ -20,7 +20,7 @@ LanguageTags = List[str]
 
 # ############# PROGRAM DESCRIPTION ###########################################
 
-app_desc = "Arrange TMs by domain on batch transition"
+app_desc = "Arrange TMs by batch or domain on batch transition"
 
 # initialize arg parser with a description
 parser = argparse.ArgumentParser(description=app_desc)
@@ -31,7 +31,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 # check for -V or --version
-version_text = f"{app_desc} v. 0.1"
+version_text = f"{app_desc} v. 0.2"
 if args.version:
     print(version_text)
     sys.exit()
@@ -51,11 +51,11 @@ def get_locales() -> List[dict]:
     Fetches language tags from an external source.
 
     Returns:
-        list: A list of dictionaries containing locales in different conventions.
+        list: A list of BCP-47 locales (strings).
     """
     url: str = 'https://capps.capstan.be/langtags_json.php'
     response: Response = requests.get(url)
-    return response.json()
+    return [entry["BCP47"] for entry in response.json()] 
 
 
 def search_file_in_directories(dir_path: str, folders: list, filename: str) -> bool:
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     # extension we add to TMX files to disable them
     idle_extension: str = ".idle"
     # list of language tags
-    locales: LanguageTags = [entry["BCP47"] for entry in get_locales()]
+    locales: LanguageTags = get_locales()
 
     # trend TMs from previous cycle ('trend') and new TMs from current cycle (called 'ref')
     for tmx_file in get_tmx_files(tm_dir_path, ["trend", "ref"]):
