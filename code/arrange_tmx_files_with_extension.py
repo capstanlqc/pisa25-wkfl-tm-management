@@ -46,7 +46,7 @@ args = parser.parse_args()
 
 # ############# BUSINES LOGIC ###########################################
 
-def get_locales() -> List[dict]:
+def get_locales() -> LanguageTags:
     """
     Fetches language tags from an external source.
 
