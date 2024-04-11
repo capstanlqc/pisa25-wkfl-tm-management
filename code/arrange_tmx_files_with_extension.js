@@ -159,6 +159,7 @@ function moveFile(origPath, destPath) {
 function sortRefTmxFileByDomain(filePath, currentDomains) {
     // Sorts reference TMX files by domain
     const dirtyTmxDomain = getDomain(filePath);
+    // @todo: refactor this part so that the output of the getDomain() function is already clean (see @strip_domain decorator in the python script)
     const tmxDomain = dirtyTmxDomain.replace("CGA-", "").replace("-New", "").replace("New", "").replace("-Trend", "").replace("Trend", "")
 
     if (fs.existsSync(filePath)) {
