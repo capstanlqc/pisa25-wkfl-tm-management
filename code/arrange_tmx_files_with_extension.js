@@ -97,7 +97,7 @@ function hasNewVersion(filePath, tmxDomain) {
 }
 
 function getDomain(file) {
-    // Extracts the domain from a file name
+    // Extracts the (dirty) domain from a file name; dirty = might contain prefixes/suffixes (CGA-, -New, etc.)
     const fileName = path.basename(file);
     const pattern = /\.tmx(\.zip)?(\.idle)?$/;
     if (fileName.startsWith('PISA_') && pattern.test(fileName)) {
@@ -159,7 +159,7 @@ function moveFile(origPath, destPath) {
 function sortRefTmxFileByDomain(filePath, currentDomains) {
     // Sorts reference TMX files by domain
     const dirtyTmxDomain = getDomain(filePath);
-    const tmxDomain = dirtyTmxDomain.replace("CGA-", "").replace("New", "").replace("-New", "")
+    const tmxDomain = dirtyTmxDomain.replace("CGA-", "").replace("-New", "").replace("New", "").replace("-Trend", "").replace("Trend", "")
 
     if (fs.existsSync(filePath)) {
         if (hasNewVersion(filePath, tmxDomain)) {

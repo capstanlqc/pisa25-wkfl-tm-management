@@ -105,7 +105,11 @@ def has_new_version(file_path: str, tmx_domain: str) -> bool:
 
 def get_domain(file: str) -> str:
     """
-    Extracts the domain from a file name.
+    Extracts the (dirty) domain from a file name.
+    Dirty = might contain prefixes/suffixes (CGA-, -New, etc.) which must be removed to have a clean domain.
+    
+    TODO: The output of the get_domain() function can be cleaned with a @clean_domain decorator, 
+    so that the returned value is already clean and the cleaning doesn't have to happen in the code that uses it.
 
     Args:
         file (str): Name of the file.
@@ -200,7 +204,7 @@ def sort_ref_tmx_file_by_domain(file_path: str, current_domains: list) -> None:
     """
     # gets the domain of a tmx file, according to different file naming patterns
     dirty_tmx_domain = get_domain(file_path)
-    tmx_domain = dirty_tmx_domain.removeprefix("CGA-").removesuffix("New").removesuffix("-New")
+    tmx_domain = dirty_tmx_domain.removeprefix("CGA-").removesuffix("-New").removesuffix("New").removesuffix("-Trend").removesuffix("Trend")
 
     if os.path.exists(file_path):
 
