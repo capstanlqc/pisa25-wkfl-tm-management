@@ -103,13 +103,41 @@ def has_new_version(file_path: str, tmx_domain: str) -> bool:
     return False
 
 
+def strip_domain(affixes):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            # Call the original function
+            result = func(*args, **kwargs)
+            # Check if the result is a string
+            if isinstance(result, str):
+                # Remove suffixes
+                for suffix in affixes['suffix']:
+                    if result.endswith(f'-{suffix}'):
+                        result = result[: -len(f'-{suffix}')]
+                        break
+                    elif result.endswith(suffix):
+                        result = result[: -len(suffix)]
+                        break
+                # Remove prefixes
+                for prefix in affixes['prefix']:
+                    if result.startswith(f'-{prefix}'):
+                        result = result[len(f'-{prefix}'):]
+                        break
+                    elif result.startswith(prefix):
+                        result = result[len(prefix):]
+                        break
+                return result
+            else:
+                return result
+        return wrapper
+    return decorator
+    
+
+@strip_domain({'suffix': ['New', 'Trend'], 'prefix': ['CGA']})
 def get_domain(file: str) -> str:
     """
     Extracts the (dirty) domain from a file name.
-    Dirty = might contain prefixes/suffixes (CGA-, -New, etc.) which must be removed to have a clean domain.
-    
-    TODO: The output of the get_domain() function can be cleaned with a @clean_domain decorator, 
-    so that the returned value is already clean and the cleaning doesn't have to happen in the code that uses it.
+    If the domain is dirty, it will be cleaned up by the @strip_domain decorator.
 
     Args:
         file (str): Name of the file.
@@ -203,8 +231,7 @@ def sort_ref_tmx_file_by_domain(file_path: str, current_domains: list) -> None:
         current_domains (list): List of current domains.
     """
     # gets the domain of a tmx file, according to different file naming patterns
-    dirty_tmx_domain = get_domain(file_path)
-    tmx_domain = dirty_tmx_domain.removeprefix("CGA-").removesuffix("-New").removesuffix("New").removesuffix("-Trend").removesuffix("Trend")
+    tmx_domain = get_domain(file_path)
 
     if os.path.exists(file_path):
 
