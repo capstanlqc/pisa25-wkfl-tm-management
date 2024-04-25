@@ -120,8 +120,8 @@ def strip_domain(affixes):
                         break
                 # Remove prefixes
                 for prefix in affixes['prefix']:
-                    if result.startswith(f'-{prefix}'):
-                        result = result[len(f'-{prefix}'):]
+                    if result.startswith(f'{prefix}-'):
+                        result = result[len(f'{prefix}-'):]
                         break
                     elif result.startswith(prefix):
                         result = result[len(prefix):]
