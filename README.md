@@ -100,3 +100,7 @@ python3 code/arrange_tmx_files_with_extension.py --repo /path/to/omegat/project/
 ### Backlog
 
 Logging
+
+## Function documentation
+
+A static API-style documentation about functions in the `arrange_tmx_files_with_extension` scripts is provided [here](https://capstanlqc.github.io/pisa25-git-omegat-project-admin/arrange_tmx_files_with_extension.html).
