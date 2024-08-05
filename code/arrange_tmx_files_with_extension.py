@@ -42,8 +42,6 @@ else:
     print("Required argument not found. Run this script with `--help` for details.")
     sys.exit()
 
-args = parser.parse_args()
-
 # ############# BUSINES LOGIC ###########################################
 
 def get_locales() -> LanguageTags:
@@ -103,7 +101,7 @@ def has_new_version(file_path: str, tmx_domain: str) -> bool:
     return False
 
 
-def strip_domain(affixes):
+def trim_domain(affixes):
     def decorator(func):
         def wrapper(*args, **kwargs):
             # Call the original function
@@ -133,11 +131,11 @@ def strip_domain(affixes):
     return decorator
     
 
-@strip_domain({'suffix': ['New', 'Trend'], 'prefix': ['CGA']})
+@trim_domain({'suffix': ['New', 'Trend'], 'prefix': ['CGA']})
 def get_domain(file: str) -> str:
     """
     Extracts the (dirty) domain from a file name.
-    If the domain is dirty, it will be cleaned up by the @strip_domain decorator.
+    If the domain is dirty, it will be cleaned up by the @trim_domain decorator.
 
     Args:
         file (str): Name of the file.
@@ -148,7 +146,7 @@ def get_domain(file: str) -> str:
     # get file's basename if it's a path (linux specific)
     file_name: str = os.path.basename(file)
     # defines the pattern to match any TMX's extension (which can be zipped or disabled, or not)
-    pattern: str = "\.tmx(\.zip)?(\.idle)?$"
+    pattern: str = r"\.tmx(\.zip)?(\.idle)?$"
 
     # any files starting with PISA_ contain domain-specific translations
     if file_name.startswith("PISA_") and re.search(pattern, file_name):
@@ -235,12 +233,13 @@ def sort_ref_tmx_file_by_domain(file_path: str, current_domains: list) -> None:
 
     if os.path.exists(file_path):
 
-        if has_new_version(file_path, tmx_domain):
-            # disable any trend TM if it's enabled and that has a new version from the current cycle
-            if not file_path.endswith(idle_extension):
-                new_file_path = file_path + idle_extension
-                move_file(file_path, new_file_path)
-        elif tmx_domain in current_domains and file_path.endswith(idle_extension):
+        # if has_new_version(file_path, tmx_domain):
+        #     # disable any trend TM if it's enabled and that has a new version from the current cycle
+        #     if not file_path.endswith(idle_extension):
+        #         new_file_path = file_path + idle_extension
+        #         move_file(file_path, new_file_path)
+        # el
+        if tmx_domain in current_domains and file_path.endswith(idle_extension):
             # enables the TM if it's disabled but matches any of the current domains in the  project
             new_file_path = file_path.removesuffix(idle_extension)
             move_file(file_path, new_file_path)
