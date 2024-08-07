@@ -47,6 +47,7 @@ const tmDirPath = path.join(rootDirPath, 'tm')
 
 const idleExtension = '.idle';
 const locales = getLocales();
+const batches = ["01_COS_SCI-A_N", "02_COS_SCI-B_N", "03_COS_SCI-C_N", "04_QQS_N", "05_QQA_N", "06_COS_LDW_N", "07_COS_XYZ_N", "08_CGA_SCI_N", "11_COS_MAT-A_T", "12_COS_MAT-B_T", "13_COS_REA-A_T", "14_COS_REA-B_T", "15_COS_SCI-A_T", "16_COS_SCI-B_T", "17_CGA_SCI_T", "18_CGA_MAT_T", "19_CGA_REA_T", "21_COSP_REA-A_T", "22_COSP_REA-B_T", "23_COSP_MAT-A_T", "24_COSP_MAT-B_T", "25_COSP_SCI-A_N", "26_COSP_SCI-A_T", "27_QQSP_N", "28_QQAP_N", "29_COSP_XYZ_N", "30_CGAP_MAT_T", "31_CGAP_REA_T", "32_CGAP_SCI_T", "33_CGAP_SCI_N"]
 
 // Helper functions
 function removeSuffix(str, suffix) {
@@ -181,14 +182,16 @@ function sortRefTmxFileByDomain(filePath, currentDomains) {
 }
 
 function getBatchFromFilename(filePath) {
-    const fileName = path.basename(filePath);
+    /* const fileName = path.basename(filePath);
     const fileStem = fileName.split(".")[0];
 
     if (fileStem.split("_").some(x => locales.includes(x))) {
         // This is a base TM, hence remove language code
         return fileStem.split("_").slice(0, -1).join("_");
     }
-    return fileStem;
+    return fileStem; */
+    const fileName = path.basename(filePath);
+    return batches.filter(batch => fileName.includes(batch))[0];
 }
 
 function sortBatchTmxFileByBatch(filePath, batches) {
